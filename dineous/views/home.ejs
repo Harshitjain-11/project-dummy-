@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DINeaus -Demo its an only rought page for chatbot rendering</title>
+<script>
+  window.DINEAUS_SESSION = {
+    userId: "guest_" + Date.now(),
+    activeRestaurant: null,   // { id, name }
+    menu: [],                 // current restaurant menu
+    cart: [],                 // [{ id, name, qty, price }]
+    booking: null,            // { date, time, people }
+    source: null              // "ui" | "chatbot"
+  };
+</script>
+  <!-- Font Import -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Poppins:wght@100;400;700&display=swap" rel="stylesheet">
+   <style>
+    :root {
+            /* Base Colors from user's original */
+            --primary: #3b82f6; /* Electric Blue Accent */
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #22c55e;
+
+            
+            --bg-dark: #0f172a; /* Slate 900 */
+            --bg-light: #1e293b;
+            --bg-deep: #020617; /* Deep Blue/Black */
+            --card-bg: rgba(43, 20, 221, 0); /* Glassmorphism Base */
+            --text-light: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border-glow: rgba(59, 130, 246, 0.5); /* Blue Glow */
+            --secondary-accent: #9333ea; /* Purple Accent */
+        }
+
+        /* --- 2. Global Styling & Background Animation --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-light);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+            
+            /* Animated Gradient Background */
+            background: linear-gradient(135deg, var(--bg-deep) 0%, var(--bg-dark) 50%, var(--bg-deep) 100%);
+            background-size: 400% 400%;
+            animation: backgroundMove 20s ease infinite;
+             /*background: radial-gradient(circle at center, #11151c 0%, #181c28 80%);*/
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+        }
+        body, .container {
+    color: #e2e8f0;
+  }      
+   </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="logo-brand">
+            <span class="logo-icon">🛡️</span>
+            E-CompliGuard
+        </nav>
+    </header>
+
+ <button class="chat-toggle-btn" id="chat-toggle">
+  <img src="/chatbot/assets/bot-face.png" alt="DineBot" />
+</button>
+
+
+  <!-- Chat Container -->
+  <div class="chat-container" id="chat-container">
+    
+    <!-- Header -->
+    <div class="chat-header">
+      <div class="header-logo">
+  <img src="/chatbot/assets/bot-face.png" alt="DineBot" />
+</div>
+      <div class="header-info">
+        <h3>DineBot</h3>
+        <span>Your AI Food Assistant</span>
+      </div>
+      <div class="header-actions">
+        <button id="reset-btn" title="Reset Chat">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        </button>
+        <button id="minimize-btn" title="Minimize">
+          <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Info Banner -->
+    <div class="info-banner">
+      DineBot helps you with food orders. Ask about our menu, specials, or place an order!
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages" id="chat-messages"></div>
+
+    <!-- Input -->
+    <div class="chat-input">
+      <div class="input-row">
+        <input type="text" id="user-input" placeholder="Ask DineBot..." autocomplete="off">
+        <button id="mic-btn" title="Voice Input">🎤</button>
+        <button id="send-btn" title="Send">➤</button>
+      </div>
+    </div>
+  </div>
+<link rel="stylesheet" href="/chatbot/style.css">
+<script src="/chatbot/script.js"></script>
+</div>
+</body>
+</html>
+
