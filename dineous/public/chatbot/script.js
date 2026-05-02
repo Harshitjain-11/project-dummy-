@@ -8,6 +8,7 @@ const minimizeBtn = document.getElementById("minimize-btn");
 const resetBtn = document.getElementById("reset-btn");
 
 let isSending = false;
+let activeCartCardEl = null; // FIX 1: track active cart card to remove stale ones
 
 // ===== FOOD EMOJIS for items =====
 const FOOD_EMOJIS = {
@@ -71,6 +72,7 @@ function appendMessage(sender, text) {
 }
 
 // ===== APPEND RICH CARD (bot only) =====
+// FIX 2: returns wrapper so callers can remove it later
 function appendCard(cardHTML) {
   const wrapper = document.createElement("div");
   wrapper.className = "message bot-msg";
@@ -98,7 +100,7 @@ function appendCard(cardHTML) {
   messages.appendChild(wrapper);
   messages.scrollTop = messages.scrollHeight;
 
-  return cardWrapper;
+  return wrapper; // FIX 2: return so we can remove stale cart cards
 }
 
 // ===== RENDER RESTAURANT CARDS =====
@@ -174,7 +176,13 @@ function renderMenuCards(menuItems, priceMap) {
 }
 
 // ===== RENDER CART =====
+// FIX 3: removes old cart card before showing new one — no more stale confirm buttons
 function renderCart(cartItems, total) {
+  if (activeCartCardEl) {
+    activeCartCardEl.remove();
+    activeCartCardEl = null;
+  }
+
   const html = `
     <div class="cart-display">
       <div class="cart-header-strip">
@@ -187,6 +195,7 @@ function renderCart(cartItems, total) {
             <span class="cart-item-name">${item.name.charAt(0).toUpperCase() + item.name.slice(1)}</span>
             <span class="cart-item-qty">×${item.qty}</span>
             <span class="cart-item-price">₹${(item.price * item.qty).toFixed(0)}</span>
+            <button class="cart-remove-btn" onclick="removeItem('${item.name}')">✕</button>
           </div>
         `).join('')}
       </div>
@@ -199,11 +208,24 @@ function renderCart(cartItems, total) {
       </button>
     </div>
   `;
-  appendCard(html);
+
+  activeCartCardEl = appendCard(html);
 }
 
+// FIX 3b: remove item handler
+window.removeItem = function(name) {
+  sendMessage(`remove ${name}`);
+};
+
 // ===== RENDER ORDER CONFIRMED =====
+// FIX 4: price display fixed — no more wrong per-item price calculation
 function renderOrderConfirmed(orderId, items, total) {
+  // Also clear cart card when order is confirmed
+  if (activeCartCardEl) {
+    activeCartCardEl.remove();
+    activeCartCardEl = null;
+  }
+
   const html = `
     <div class="order-confirmed-card">
       <div class="order-confirmed-header">
@@ -215,7 +237,7 @@ function renderOrderConfirmed(orderId, items, total) {
         <div class="order-items-mini">
           ${items.map(i => `
             <div class="order-item-mini-row">
-              ${i.qty}× ${i.name.charAt(0).toUpperCase() + i.name.slice(1)} — <strong>₹${(i.qty * i.price).toFixed(0)}</strong>
+              ${i.qty}× ${i.name.charAt(0).toUpperCase() + i.name.slice(1)}
             </div>
           `).join('')}
         </div>
@@ -224,7 +246,7 @@ function renderOrderConfirmed(orderId, items, total) {
           <div class="order-eta-time">30–40 min</div>
         </div>
         <div style="font-size:12px;color:#666;text-align:center;margin-bottom:8px;">
-          💰 Total Paid: <strong style="color:#e85d04">₹${total}</strong>
+          💰 Total: <strong style="color:#e85d04">₹${total}</strong>
         </div>
         <button class="order-track-btn" onclick="sendMessage('track ${orderId}')">
           📦 Track Order #${orderId}
@@ -232,6 +254,7 @@ function renderOrderConfirmed(orderId, items, total) {
       </div>
     </div>
   `;
+
   appendCard(html);
 }
 
@@ -276,7 +299,7 @@ function renderOrderStatus(order) {
           ${items.map(i => `
             <div style="font-size:12.5px;color:#333;display:flex;justify-content:space-between;">
               <span>${i.qty}× ${i.name.charAt(0).toUpperCase() + i.name.slice(1)}</span>
-              <span style="color:#e85d04;font-weight:600;">₹${(i.qty * i.price).toFixed(0)}</span>
+              <span style="color:#e85d04;font-weight:600;">₹${(i.qty * (i.price || 0)).toFixed(0)}</span>
             </div>
           `).join('')}
         </div>
@@ -345,11 +368,9 @@ window.orderItem = function(name) {
 function handleBotResponse(data, message) {
   const reply = data.reply || "";
   const intent = data.intent || "";
-  const lowerReply = reply.toLowerCase();
 
-  // RESTAURANTS LIST — detect from response
+  // RESTAURANTS LIST
   if (intent === "view_restaurants" || (intent === "select_restaurant" && reply.includes("Invalid"))) {
-    // Try to parse restaurant list from reply
     const lines = reply.split('\n').filter(l => l.trim());
     const restaurants = [];
     lines.forEach(line => {
@@ -370,11 +391,10 @@ function handleBotResponse(data, message) {
     return;
   }
 
-  // MENU — detect menu items in reply
+  // MENU
   if (intent === "menu" || (reply.includes("Menu:") && reply.includes("₹"))) {
     const items = [];
-    const lines = reply.split('\n');
-    lines.forEach(line => {
+    reply.split('\n').forEach(line => {
       const match = line.match(/\d+\.\s+(.+?)\s+-\s+₹([\d.]+)/i);
       if (match) {
         items.push({ item_name: match[1].trim(), price: parseFloat(match[2]) });
@@ -387,18 +407,20 @@ function handleBotResponse(data, message) {
     }
   }
 
-  // CART — detect cart summary
+  // CART — FIX 3: old cart removed before new one renders
   if (reply.includes("Added to cart") && reply.includes("Cart:")) {
-    // Parse cart items from text
     const cartItems = [];
     const totalMatch = reply.match(/Total:\s*₹([\d.]+)/);
     const total = totalMatch ? totalMatch[1] : '0';
 
-    const itemLines = reply.split('\n').filter(l => l.includes('×') || l.includes('x '));
-    itemLines.forEach(line => {
+    reply.split('\n').forEach(line => {
       const m = line.match(/•\s*(\d+)x\s+(.+?)\s+-\s+₹([\d.]+)/i);
       if (m) {
-        cartItems.push({ qty: parseInt(m[1]), name: m[2].trim(), price: parseFloat(m[3]) / parseInt(m[1]) });
+        cartItems.push({
+          qty: parseInt(m[1]),
+          name: m[2].trim(),
+          price: parseFloat(m[3]) / parseInt(m[1])
+        });
       }
     });
 
@@ -408,22 +430,24 @@ function handleBotResponse(data, message) {
     }
   }
 
-  // ORDER CONFIRMED
+  // ORDER CONFIRMED — FIX 4 & 5: no price bug, cart cleared
   if (intent === "confirm_order" && reply.includes("Order Confirmed")) {
     const orderIdMatch = reply.match(/Order ID:\s*\*?\*?(\d+)\*?\*?/);
     const totalMatch = reply.match(/Total:\s*₹([\d.]+)/);
     const orderId = orderIdMatch ? orderIdMatch[1] : '?';
     const total = totalMatch ? totalMatch[1] : '0';
 
-    // Parse items
     const items = [];
-    const itemLines = reply.split('\n');
-    itemLines.forEach(line => {
+    reply.split('\n').forEach(line => {
       const m = line.match(/•\s*(\d+)x\s+(.+)/i);
-      if (m) items.push({ qty: parseInt(m[1]), name: m[2].trim(), price: parseFloat(total) / parseInt(m[1]) });
+      if (m) items.push({ qty: parseInt(m[1]), name: m[2].trim() });
     });
 
-    renderOrderConfirmed(orderId, items.length > 0 ? items : [{ qty: 1, name: 'Item', price: parseFloat(total) }], total);
+    renderOrderConfirmed(
+      orderId,
+      items.length > 0 ? items : [{ qty: 1, name: 'Your order' }],
+      total
+    );
     return;
   }
 
@@ -436,8 +460,7 @@ function handleBotResponse(data, message) {
     const status = statusMatch ? statusMatch[1].toLowerCase() : 'pending';
 
     const items = [];
-    const itemLines = reply.split('\n');
-    itemLines.forEach(line => {
+    reply.split('\n').forEach(line => {
       const m = line.match(/•\s*(\d+)x\s+(.+)/i);
       if (m) items.push({ qty: parseInt(m[1]), name: m[2].trim(), price: 0 });
     });
@@ -463,7 +486,7 @@ function handleBotResponse(data, message) {
     return;
   }
 
-  // DEFAULT — plain text with cleaned markdown
+  // DEFAULT — plain text, markdown stripped
   const cleaned = reply
     .replace(/\*\*(.*?)\*\*/g, '$1')
     .replace(/\*(.*?)\*/g, '$1');
@@ -471,6 +494,7 @@ function handleBotResponse(data, message) {
 }
 
 // ===== SEND MESSAGE =====
+// FIX 6: user_id from window.DINEAUS_USER_ID instead of hardcoded "harshit"
 async function sendMessage(customText = null, forceAppend = false) {
   const text = String(customText ?? input.value).trim();
   if (!text || isSending) return;
@@ -484,7 +508,10 @@ async function sendMessage(customText = null, forceAppend = false) {
     const res = await fetch("http://localhost:5000/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: "harshit", message: text }),
+      body: JSON.stringify({
+        user_id: window.DINEAUS_USER_ID || "guest_" + Date.now(),
+        message: text
+      }),
     });
 
     if (!res.ok) throw new Error("Network response not OK");
@@ -631,6 +658,7 @@ minimizeBtn.addEventListener("click", () => {
 
 resetBtn.addEventListener("click", () => {
   hideTyping();
+  activeCartCardEl = null; // reset cart tracking on chat reset
   messages.innerHTML = "";
   appendMessage("bot", "Hi 👋 I'm DineBot.\nHow can I help you today?");
   appendOptions(QUICK_ACTIONS);
@@ -673,4 +701,3 @@ function hideTyping() {
     typingBubble = null;
   }
 }
-
