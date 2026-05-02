@@ -1,0 +1,82 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FoodIn Chatbot</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">🍽️DIne-bot</div>
+
+    <div class="chat-messages" id="chat-messages"></div>
+
+    <div class="chat-input">
+      <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off">
+  <button id="mic-btn">🎤</button>
+  <button id="send-btn">Send</button>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DineBot - Food Assistant</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Floating Chat Toggle Button -->
+  <button class="chat-toggle-btn" id="chat-toggle">
+    <svg class="chat-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+    <svg class="close-icon" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+  </button>
+
+  <!-- Chat Container -->
+  <div class="chat-container" id="chat-container">
+    
+    <!-- Header -->
+    <div class="chat-header">
+      <div class="header-logo">
+        <svg viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
+      </div>
+      <div class="header-info">
+        <h3>DineBot</h3>
+        <span>Your AI Food Assistant</span>
+      </div>
+      <div class="header-actions">
+        <button id="reset-btn" title="Reset Chat">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        </button>
+        <button id="minimize-btn" title="Minimize">
+          <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Info Banner -->
+    <div class="info-banner">
+      DineBot helps you with food orders. Ask about our menu, specials, or place an order!
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages" id="chat-messages"></div>
+
+    <!-- Input -->
+    <div class="chat-input">
+      <div class="input-row">
+        <input type="text" id="user-input" placeholder="Ask DineBot..." autocomplete="off">
+        <button id="mic-btn" title="Voice Input">🎤</button>
+        <button id="send-btn" title="Send">➤</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
